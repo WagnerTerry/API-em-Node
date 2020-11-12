@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 
 const rotaProdutos = require("./routes/produtos");
 const rotaPedidos = require("./routes/pedidos");
+const rotaUsuarios = require("./routes/usuarios");
 
 app.use(morgan("dev")); // monitora/escuta as rotas 200, 201 etc e diz o metodo GET, POST etc
 app.use("/uploads", express.static("uploads"));
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
 
 app.use("/produtos", rotaProdutos);
 app.use("/pedidos", rotaPedidos);
+app.use("/usuarios", rotaUsuarios);
 
 //Quando não encontra a rota
 app.use((req, res, next) => {
