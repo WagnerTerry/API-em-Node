@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mysql = require("../mysql").pool;
 const multer = require("multer"); // usado para o form-data
+const login = require("../middleware/login");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -63,45 +64,50 @@ router.get("/", (req, res, next) => {
 });
 
 //INSERE PRODUTOS
-router.post("/", upload.single("produto_imagem"), (req, res, next) => {
-  console.log(req.file);
+router.post(
+  "/",
+  login.obrigatorio,
+  upload.single("produto_imagem"),
+  (req, res, next) => {
+    console.log(req.file);
 
-  // const produtos = {
-  //   nome: req.body.nome,
-  //   preco: req.body.preco,
-  // };
+    // const produtos = {
+    //   nome: req.body.nome,
+    //   preco: req.body.preco,
+    // };
 
-  mysql.getConnection((error, conn) => {
-    if (error) {
-      return res.status(500).send({ error: error });
-    }
-    conn.query(
-      "INSERT INTO produtos (nome, preco, imagem_produto) VALUES (?,?,?)",
-      [req.body.nome, req.body.preco, req.file.path],
-      (error, result, field) => {
-        conn.release(); // NÃO ESQUECER ESSE METODO, POIS PODE TRAVAR A API
-        if (error) {
-          return res.status(500).send({ error: error });
-        }
-        const response = {
-          mensagem: "Produto inserido com sucesso",
-          produtoCriado: {
-            id_produto: result.id_produto,
-            nome: req.body.nome,
-            preco: req.body.preco,
-            imagem_produto: req.file.path,
-            request: {
-              tipo: "GET",
-              descricao: "Retorna todos os produtos",
-              url: "http://localhost:3000/produtos/",
-            },
-          },
-        };
-        return res.status(201).send({ response });
+    mysql.getConnection((error, conn) => {
+      if (error) {
+        return res.status(500).send({ error: error });
       }
-    );
-  });
-});
+      conn.query(
+        "INSERT INTO produtos (nome, preco, imagem_produto) VALUES (?,?,?)",
+        [req.body.nome, req.body.preco, req.file.path], // ao inserir imagem, usar o form-data e colocar a opção para file
+        (error, result, field) => {
+          conn.release(); // NÃO ESQUECER ESSE METODO, POIS PODE TRAVAR A API
+          if (error) {
+            return res.status(500).send({ error: error });
+          }
+          const response = {
+            mensagem: "Produto inserido com sucesso",
+            produtoCriado: {
+              id_produto: result.id_produto,
+              nome: req.body.nome,
+              preco: req.body.preco,
+              imagem_produto: req.file.path,
+              request: {
+                tipo: "GET",
+                descricao: "Retorna todos os produtos",
+                url: "http://localhost:3000/produtos/",
+              },
+            },
+          };
+          return res.status(201).send({ response });
+        }
+      );
+    });
+  }
+);
 
 //RETORNA OS DADOS DE UM PRODUTO
 router.get("/:id_produto", (req, res, next) => {
@@ -157,7 +163,7 @@ router.get("/:id_produto", (req, res, next) => {
 });
 
 //ALTERA UM PRODUTO
-router.patch("/", (req, res, next) => {
+router.patch("/", login.obrigatorio, (req, res, next) => {
   mysql.getConnection((error, conn) => {
     if (error) {
       return res, status(500).send({ error: error });
@@ -196,7 +202,7 @@ router.patch("/", (req, res, next) => {
 });
 
 //EXCLUI UM PRODUTO
-router.delete("/", (req, res, next) => {
+router.delete("/", login.obrigatorio, (req, res, next) => {
   mysql.getConnection((error, conn) => {
     if (error) {
       return res, status(500).send({ error: error });

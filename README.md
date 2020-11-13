@@ -2,7 +2,9 @@ API EM NODE
 
 bibliotecas para instalar
 
+- npm install --save multer // biblioteca usada para tratar p form-data
 - npm install --save bcrypt //criptografar senha
+- npm install jsonwebtoken --save
 
 comandos sql
 
