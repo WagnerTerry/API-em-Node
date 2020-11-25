@@ -14,3 +14,5 @@ comandos sql
   - nao nulos
     > alter table usuarios modify column email varchar(100) not null;
     > alter table usuarios modify column senha varchar(100) not null;
+
+\*DEV sem o heroku
