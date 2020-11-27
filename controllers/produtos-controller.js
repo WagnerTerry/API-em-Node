@@ -1,76 +1,91 @@
-const mysql = require("../mysql").pool;
+const mysql = require("../mysql");
 
-exports.getProdutos = (req, res, next) => {
-  // res.status(200).send({
-  //   mensagem: "Usando GET em produtos",
-  // });
-  mysql.getConnection((error, conn) => {
-    if (error) {
-      return res.status(500).send({ error: error });
-    }
-    conn.query("SELECT * FROM produtos;", (error, result, fields) => {
-      if (error) {
-        return res.status(500).send({ error: error });
-      }
-      const response = {
-        quantidade: result.length,
-        produtos: result.map((prod) => {
-          return {
-            id_produto: prod.id_produto,
-            nome: prod.nome,
-            preco: prod.preco,
-            imagem_produto: prod.imagem_produto,
-            request: {
-              tipo: "GET",
-              descricao: "Retorna os detalhes de um produto especifico",
-              url: "http://localhost:3000/produtos/" + prod.id_produto,
-            },
-          };
-        }),
-      };
-      return res.status(200).send({ response });
-    });
-  });
-};
-
-exports.postProduto = (req, res, next) => {
-  console.log(req.file);
-
-  // const produtos = {
-  //   nome: req.body.nome,
-  //   preco: req.body.preco,
-  // };
-
-  mysql.getConnection((error, conn) => {
-    if (error) {
-      return res.status(500).send({ error: error });
-    }
-    conn.query(
-      "INSERT INTO produtos (nome, preco, imagem_produto) VALUES (?,?,?)",
-      [req.body.nome, req.body.preco, req.file.path], // ao inserir imagem, usar o form-data e colocar a opção para file
-      (error, result, field) => {
-        conn.release(); // NÃO ESQUECER ESSE METODO, POIS PODE TRAVAR A API
-        if (error) {
-          return res.status(500).send({ error: error });
-        }
-        const response = {
-          mensagem: "Produto inserido com sucesso",
-          produtoCriado: {
-            id_produto: result.id_produto,
-            nome: req.body.nome,
-            preco: req.body.preco,
-            imagem_produto: req.file.path,
-            request: {
-              tipo: "GET",
-              descricao: "Retorna todos os produtos",
-              url: "http://localhost:3000/produtos/",
-            },
+exports.getProdutos = async (req, res, next) => {
+  try {
+    const result = await mysql.execute("SELECT * FROM produtos;");
+    const response = {
+      quantidade: result.length,
+      produtos: result.map((prod) => {
+        return {
+          id_produto: prod.id_produto,
+          nome: prod.nome,
+          preco: prod.preco,
+          imagem_produto: prod.imagem_produto,
+          request: {
+            tipo: "GET",
+            descricao: "Retorna os detalhes de um produto especifico",
+            url: "http://localhost:3000/produtos/" + prod.id_produto,
           },
         };
-        return res.status(201).send({ response });
-      }
-    );
-  });
+      }),
+    };
+    return res.status(200).send(response);
+  } catch (error) {
+    return res.status(500).send({ error: error });
+  }
+};
+
+// exports.getProdutos = (req, res, next) => {
+//   // res.status(200).send({
+//   //   mensagem: "Usando GET em produtos",
+//   // });
+//   mysql.getConnection((error, conn) => {
+//     if (error) {
+//       return res.status(500).send({ error: error });
+//     }
+//     conn.query("SELECT * FROM produtos;", (error, result, fields) => {
+//       conn.release();
+//       if (error) {
+//         return res.status(500).send({ error: error });
+//       }
+//       const response = {
+//         quantidade: result.length,
+//         produtos: result.map((prod) => {
+//           return {
+//             id_produto: prod.id_produto,
+//             nome: prod.nome,
+//             preco: prod.preco,
+//             imagem_produto: prod.imagem_produto,
+//             request: {
+//               tipo: "GET",
+//               descricao: "Retorna os detalhes de um produto especifico",
+//               url: "http://localhost:3000/produtos/" + prod.id_produto,
+//             },
+//           };
+//         }),
+//       };
+//       return res.status(200).send({ response });
+//     });
+//   });
+// };
+
+exports.postProduto = (req, res, next) => {
+  try {
+    const query =
+      "INSERT INTO produtos (nome, preco, imagem_produto) VALUES (?,?,?)";
+    const result = mysql.execute(query, [
+      req.body.nome,
+      req.body.preco,
+      req.file.path,
+    ]);
+    const response = {
+      mensagem: "Produto inserido com sucesso",
+      produtoCriado: {
+        id_produto: result.id_produto,
+        nome: req.body.nome,
+        preco: req.body.preco,
+        imagem_produto: req.file.path,
+        request: {
+          tipo: "GET",
+          descricao: "Retorna todos os produtos",
+          url: "http://localhost:3000/produtos/",
+        },
+      },
+    };
+    return res.status(201).send({ response });
+  } catch (error) {
+    return res.status(500).send({ error: error });
+  }
 };
 
 exports.getUmProduto = (req, res, next) => {
